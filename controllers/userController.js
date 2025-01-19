@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 // Sign-Up
 const signUp = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password } = req.body;
 
     //Check if email already exists
     const existingEmail = await User.findOne({ email: email });
@@ -20,16 +20,15 @@ const signUp = async (req, res) => {
         .status(400)
         .json({ message: "Password length should be greater than 5" });
     }
-    //Hash the password
+    // Hash the password
     const hashedPass = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       name,
       email,
       password: hashedPass,
-      phone,
     });
-
+    
     const data = await newUser.save();
 
     const transporter = nodemailer.createTransport({
@@ -96,7 +95,109 @@ const signIn = async (req, res) => {
   }
 };
 
+//Get user's information
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await User.findById(id).select("-password");
+    return res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Get All Users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve users",
+      error,
+    });
+  }
+};
+
+// Update User Role
+const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    // Validate role
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role provided",
+      });
+    }
+
+    // Find and update the user's role
+    const user = await User.findByIdAndUpdate(
+      id,
+      { role },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update user role",
+      error,
+    });
+  }
+};
+
+// Delete User
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find and delete the user
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete user",
+      error,
+    });
+  }
+};
+
 module.exports = {
   signUp,
   signIn,
+  getUserById,
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
 };

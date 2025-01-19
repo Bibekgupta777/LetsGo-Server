@@ -2,9 +2,24 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 
-const { signUp, signIn } = require("../controllers/userController");
+const {
+  signUp,
+  signIn,
+  getUserById,
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
+} = require("../controllers/userController");
+const { authenticateToken } = require("../middleware/auth");
+const { isAdmin } = require("../middleware/isAdmin");
 
-router.post('/sign-up', signUp);
-router.post('/sign-in', signIn);
+router.post("/sign-up", signUp);
+router.post("/sign-in", signIn);
+router.get("/get-user-by-id/:id", getUserById);
+
+// Admin Routes
+router.get("/all", authenticateToken, isAdmin, getAllUsers); // Get all users
+router.put("/:id/role", authenticateToken, isAdmin, updateUserRole); // Update user role
+router.delete("/:id", authenticateToken, isAdmin, deleteUser); // Delete user
 
 module.exports = router;
