@@ -9,6 +9,8 @@ const {
   getAllUsers,
   updateUserRole,
   deleteUser,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/userController");
 const { authenticateToken } = require("../middleware/auth");
 const { isAdmin } = require("../middleware/isAdmin");
@@ -16,6 +18,8 @@ const { isAdmin } = require("../middleware/isAdmin");
 router.post("/sign-up", signUp);
 router.post("/sign-in", signIn);
 router.get("/get-user-by-id/:id", getUserById);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 // Admin Routes
 router.get("/all", authenticateToken, isAdmin, getAllUsers); // Get all users
