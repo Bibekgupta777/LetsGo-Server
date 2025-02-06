@@ -1,12 +1,13 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const asyncHandler = require("../middleware/async");
 
 // Sign-Up
 const signUp = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, avatar } = req.body;
 
     //Check if email already exists
     const existingEmail = await User.findOne({ email: email });
@@ -27,6 +28,7 @@ const signUp = async (req, res) => {
       name,
       email,
       password: hashedPass,
+      avatar,
     });
 
     const data = await newUser.save();
@@ -42,13 +44,13 @@ const signUp = async (req, res) => {
     });
 
     const info = await transporter.sendMail({
-      from: "nirajanmahato44@gmail.com",
+      from: "vivekgupta22265@gmail.com",
       to: email,
       subject: "Welcome to Lets Go",
       html: `
-          <h1>Your Registration has been completed</h1>
-          <p>Your user id is ${newUser.id}</p>
-          `,
+        <h1>Your Registration has been completed</h1>
+        <p>Your user id is ${newUser.id}</p>
+        `,
     });
 
     res.status(201).json({ message: "User saved successfully", data, info });
@@ -56,6 +58,16 @@ const signUp = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
+const uploadImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).send({ message: "Please upload a file" });
+  }
+  res.status(200).json({
+    success: true,
+    data: req.file.filename,
+  });
+});
 
 // Sign In
 const signIn = async (req, res) => {
@@ -298,6 +310,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   signUp,
   signIn,
+  uploadImage,
   getUserById,
   getAllUsers,
   updateUserRole,
