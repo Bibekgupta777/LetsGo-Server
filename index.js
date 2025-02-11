@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const app = express();
 const userRoutes = require('./routes/userRoutes');
 const busRoutes = require("./routes/busRoutes");
+const seatRoutes = require("./routes/seatRoutes");
 const routeRoutes = require("./routes/routeRoutes");
 
 connectDB();
@@ -15,6 +16,7 @@ app.use(express.json());
 
 app.use("/api/user", userRoutes);
 app.use("/api/bus", busRoutes);
+app.use("/api/seats", seatRoutes);
 app.use("/api/route", routeRoutes);
 
 app.listen(PORT, () => {
