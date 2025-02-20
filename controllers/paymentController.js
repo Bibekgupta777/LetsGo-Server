@@ -144,3 +144,92 @@ const confirmPayment = async (req, res) => {
         });
     }
 };
+
+// Get all payments
+const getAllPayments = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        let query = {};
+
+        if (req.query.status) {
+            query.status = req.query.status;
+        }
+
+        // If not admin, only show user's payments
+        if (!req.user.isAdmin) {
+            query.user_id = req.user.id;
+        }
+
+        const payments = await Payment.find(query)
+            .populate("booking_id")
+            .populate("user_id", "name email")
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        const total = await Payment.countDocuments(query);
+
+        res.status(200).json({
+            success: true,
+            data: payments,
+            pagination: {
+                current_page: page,
+                total_pages: Math.ceil(total / limit),
+                total_records: total,
+                records_per_page: limit
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve payments",
+            error: error.message
+        });
+    }
+};
+
+// Get payment by ID
+const getPaymentById = async (req, res) => {
+    try {
+        const payment = await Payment.findById(req.params.id)
+            .populate("booking_id")
+            .populate("user_id", "name email");
+
+        if (!payment) {
+            return res.status(404).json({
+                success: false,
+                message: "Payment not found"
+            });
+        }
+
+        // Check if user is authorized to view this payment
+        if (!req.user.isAdmin && payment.user_id.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: "Not authorized to view this payment"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: payment
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+module.exports = {
+    getStripePublicKey,
+    createPaymentIntent,
+    confirmPayment,
+    getAllPayments,
+    getPaymentById
+};
