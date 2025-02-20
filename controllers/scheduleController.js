@@ -34,3 +34,49 @@ const createSchedule = async (req, res) => {
     });
   }
 };
+
+const getScheduleByRoute = async (req, res) => {
+  try {
+    const { source, destination, date } = req.query;
+
+    // Construct query based on filters
+    let query = Schedule.find().populate("bus_id").populate("route_id");
+
+    if (source && destination) {
+      query = query.populate({
+        path: "route_id",
+        match: { source, destination },
+      });
+    }
+
+    if (date) {
+      const searchDate = new Date(date);
+      const nextDate = new Date(searchDate);
+      nextDate.setDate(searchDate.getDate() + 1);
+
+      query = query.find({
+        departure_time: {
+          $gte: searchDate,
+          $lt: nextDate,
+        },
+      });
+    }
+
+    const schedules = await query;
+
+    // Filter out schedules where route_id is null (no match for source/destination)
+    const filteredSchedules = schedules.filter(
+      (schedule) => schedule.route_id !== null
+    );
+
+    res.status(200).json({
+      success: true,
+      data: filteredSchedules,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
