@@ -81,3 +81,10 @@ const getAnalyticsSummary = async (req, res) => {
     }
   };
   
+
+module.exports = {
+  getUserSummary,
+  getBookingSummary,
+  getPaymentSummary,
+  getAnalyticsSummary,
+};
