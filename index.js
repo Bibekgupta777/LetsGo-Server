@@ -9,6 +9,9 @@ const seatRoutes = require("./routes/seatRoutes");
 const routeRoutes = require("./routes/routeRoutes");
 const scheduleRoutes = require("./routes/scheduleRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 connectDB();
 const PORT = process.env.PORT ? process.env.PORT : 5001;
@@ -22,6 +25,9 @@ app.use("/api/seats", seatRoutes);
 app.use("/api/route", routeRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/booking", bookingRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/notification", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
