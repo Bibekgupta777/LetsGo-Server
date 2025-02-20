@@ -173,3 +173,38 @@ const updateSchedule = async (req, res) => {
     });
   }
 };
+
+// Delete a Schedule
+const deleteSchedule = async (req, res) => {
+  try {
+    const { id } = req.params; // Schedule ID from request params
+
+    // Find and delete the schedule
+    const deletedSchedule = await Schedule.findByIdAndDelete(id);
+
+    if (!deletedSchedule) {
+      return res.status(404).json({
+        success: false,
+        message: "Schedule not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Schedule deleted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+module.exports = {
+  searchSchedules,
+  getScheduleByRoute,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+};
