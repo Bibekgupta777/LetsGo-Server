@@ -80,3 +80,96 @@ const getScheduleByRoute = async (req, res) => {
     });
   }
 };
+
+const searchSchedules = async (req, res) => {
+  try {
+    const { source, destination, date } = req.query;
+
+    if (!source || !destination || !date ) {
+      return res.status(400).json({
+        success: false,
+        message: "All search parameters (source, destination, date) are required.",
+      });
+    }
+
+    // Parse the date and calculate the range for filtering schedules
+    const searchDate = new Date(date);
+    const nextDate = new Date(searchDate);
+    nextDate.setDate(searchDate.getDate() + 1);
+
+    // Find schedules matching the criteria
+    const schedules = await Schedule.find({
+      departure_time: {
+        $gte: searchDate,
+        $lt: nextDate,
+      },
+    })
+      .populate({
+        path: "route_id",
+        match: { source, destination },
+      })
+      .populate("bus_id");
+
+    // Filter schedules where the route didn't match
+    const filteredSchedules = schedules.filter(
+      (schedule) => schedule.route_id
+    );
+
+    res.status(200).json({
+      success: true,
+      schedules: filteredSchedules,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Update a Schedule
+const updateSchedule = async (req, res) => {
+  try {
+    const { id } = req.params; // Schedule ID from request params
+    const { bus_id, route_id, departure_time, arrival_time, fare } = req.body;
+
+    // Find the schedule to update
+    const schedule = await Schedule.findById(id);
+    if (!schedule) {
+      return res.status(404).json({
+        success: false,
+        message: "Schedule not found",
+      });
+    }
+
+    // Optionally validate the bus ID
+    if (bus_id) {
+      const bus = await Bus.findById(bus_id);
+      if (!bus) {
+        return res.status(404).json({
+          success: false,
+          message: "Bus not found",
+        });
+      }
+    }
+
+    // Update the schedule
+    schedule.bus_id = bus_id || schedule.bus_id;
+    schedule.route_id = route_id || schedule.route_id;
+    schedule.departure_time = departure_time || schedule.departure_time;
+    schedule.arrival_time = arrival_time || schedule.arrival_time;
+    schedule.fare = fare || schedule.fare;
+
+    const updatedSchedule = await schedule.save();
+
+    res.status(200).json({
+      success: true,
+      data: updatedSchedule,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
