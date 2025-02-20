@@ -217,3 +217,36 @@ const cancelBooking = async (req, res) => {
     });
   }
 };
+
+// Get All Bookings (Admin View)
+const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate({
+        path: "schedule_id",
+        populate: [
+          { path: "bus_id", select: "bus_number" },
+          { path: "route_id", select: "source destination" },
+        ],
+      })
+      .populate("user_id", "name email");
+
+    res.status(200).json({
+      success: true,
+      data: bookings,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+module.exports = {
+  createBooking,
+  getUserBookings,
+  updateBooking,
+  cancelBooking,
+  getAllBookings,
+};
