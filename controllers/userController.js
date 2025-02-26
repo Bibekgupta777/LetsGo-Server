@@ -30,9 +30,9 @@ const signUp = async (req, res) => {
       password: hashedPass,
       avatar,
     });
-
+    
     const data = await newUser.save();
-
+    
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -42,18 +42,19 @@ const signUp = async (req, res) => {
         pass: process.env.EMAIL_PASS,
       },
     });
+  
+    
+    // const info = await transporter.sendMail({
+    //   from: process.env.EMAIL_USER,
+    //   to: email,
+    //   subject: "Welcome to Lets Go",
+    //   html: `
+    //   <h1>Your Registration has been completed</h1>
+    //   <p>Your user id is ${newUser.id}</p>
+    //   `,
+    // });
 
-    const info = await transporter.sendMail({
-      from: "vivekgupta22265@gmail.com",
-      to: email,
-      subject: "Welcome to Lets Go",
-      html: `
-        <h1>Your Registration has been completed</h1>
-        <p>Your user id is ${newUser.id}</p>
-        `,
-    });
-
-    res.status(201).json({ message: "User saved successfully", data, info });
+    res.status(201).json({ message: "User saved successfully", data });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error", error });
   }
