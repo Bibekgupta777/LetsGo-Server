@@ -1,3 +1,4 @@
+
 const express = require("express");
 const Contact = require("../models/Contact");
 
@@ -29,6 +30,19 @@ router.get("/", async (req, res) => {
     res.status(200).json(messages);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Delete a contact message by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const deletedMessage = await Contact.findByIdAndDelete(req.params.id);
+    if (!deletedMessage) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    res.status(200).json({ message: "Message deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete message" });
   }
 });
 
