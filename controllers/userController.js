@@ -2,11 +2,12 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const asyncHandler = require("../middleware/async");
 
 // Sign-Up
 const signUp = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, avatar } = req.body;
 
     //Check if email already exists
     const existingEmail = await User.findOne({ email: email });
@@ -27,10 +28,11 @@ const signUp = async (req, res) => {
       name,
       email,
       password: hashedPass,
+      avatar,
     });
-
+    
     const data = await newUser.save();
-
+    
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -40,15 +42,16 @@ const signUp = async (req, res) => {
         pass: process.env.EMAIL_PASS,
       },
     });
-
+  
+    
     const info = await transporter.sendMail({
-      from: "nirajanmahato44@gmail.com",
+      from: process.env.EMAIL_USER,
       to: email,
       subject: "Welcome to Lets Go",
       html: `
-          <h1>Your Registration has been completed</h1>
-          <p>Your user id is ${newUser.id}</p>
-          `,
+      <h1>Your Registration has been completed</h1>
+      <p>Your user id is ${newUser.id}</p>
+      `,
     });
 
     res.status(201).json({ message: "User saved successfully", data, info });
@@ -56,6 +59,16 @@ const signUp = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error });
   }
 };
+
+const uploadImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).send({ message: "Please upload a file" });
+  }
+  res.status(200).json({
+    success: true,
+    data: req.file.filename,
+  });
+});
 
 // Sign In
 const signIn = async (req, res) => {
@@ -103,55 +116,6 @@ const getUserById = async (req, res) => {
     return res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-// Update user profile
-const updateUserProfile = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, phone, address } = req.body;
-
-    // Check if user exists
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Check if user is authorized to update this profile
-    if (req.user.id !== id && req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to update this profile",
-      });
-    }
-
-    // Update user data
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      {
-        name: name || user.name,
-        email: email || user.email,
-        phone: phone || user.phone,
-        address: address || user.address,
-      },
-      { new: true, runValidators: true }
-    ).select("-password");
-
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully",
-      data: updatedUser,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to update profile",
-      error: error.message,
-    });
   }
 };
 
@@ -344,14 +308,64 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Update user profile
+const updateUserProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, address } = req.body;
+
+    // Check if user exists
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Check if user is authorized to update this profile
+    if (req.user.id !== id && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this profile",
+      });
+    }
+
+    // Update user data
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        name: name || user.name,
+        email: email || user.email,
+        phone: phone || user.phone,
+        address: address || user.address,
+      },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update profile",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   signUp,
   signIn,
+  uploadImage,
   getUserById,
-  updateUserProfile,
   getAllUsers,
   updateUserRole,
   deleteUser,
   forgotPassword,
   resetPassword,
+  updateUserProfile,
 };

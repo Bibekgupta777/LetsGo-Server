@@ -11,16 +11,19 @@ const {
   deleteUser,
   forgotPassword,
   resetPassword,
+  uploadImage,
   updateUserProfile,
 } = require("../controllers/userController");
 const { authenticateToken } = require("../middleware/auth");
 const { isAdmin } = require("../middleware/isAdmin");
+const { uploadUserAvatar } = require("../config/multerConfig");
 
 router.post("/sign-up", signUp);
 router.post("/sign-in", signIn);
 router.get("/get-user-by-id/:id", getUserById);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/uploadImage", uploadUserAvatar, uploadImage);
 router.put("/:id", authenticateToken, updateUserProfile);
 
 // Admin Routes
